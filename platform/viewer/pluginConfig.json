@@ -25,9 +25,10 @@
       "version": "3.0.1"
     }
   ],
-  "modes": [
+  "modes": [],
+  "modesFactory": [
     {
-      "packageName": "@ohif/mode-longitudinal",
+      "packageName": "@Radical/config-mode",
       "version": "3.0.0"
     }
   ]

@@ -22,7 +22,7 @@ function constructLines(input, categoryName) {
       `import ${defaultImportName} from '${packageName}';\n`
     );
     lines.addToWindowLines.push(
-      `window.${categoryName}.push(${defaultImportName});\n`
+      `${categoryName}.push(${defaultImportName});\n`
     );
 
     pluginCount++;
@@ -42,7 +42,11 @@ function getFormattedImportBlock(importLines) {
 }
 
 function getFormattedWindowBlock(addToWindowLines) {
-  let content = `window.extensions = [];\nwindow.modes = [];\n\n`;
+  let content = "const extensions = [];\n" +
+    "const modes = [];\n" +
+    "const modesFactory = [];\n" +
+    "window.extensions = extensions;\n" +
+    "window.modes = modes;\n\n";
 
   addToWindowLines.forEach(addToWindowLine => {
     content += addToWindowLine;
@@ -53,9 +57,10 @@ function getFormattedWindowBlock(addToWindowLines) {
 
 function getRuntimeLoadModesExtensions() {
   return "\n\n// Add a dynamic runtime loader\n" +
-    "window.runtimeLoadModesExtensions = async () => {\n" +
-    "for(const mode of window.modes) {\n" +
-    "if( mode.runtimeLoadModesExtensions ) await mode.runtimeLoadModesExtensions(window.modes,window.extensions);\n" +
+    "export default async () => {\n" +
+    " for(const modeFactory of modesFactory) {\n" +
+    "  const newModes = await modeFactory(modes,extensions);\n" +
+    "  newModes.forEach(newMode => modes.push(newMode));\n" +
     "}\n}\n";
 }
 
@@ -64,14 +69,17 @@ function writePluginImportsFile(SRC_DIR) {
 
   const extensionLines = constructLines(pluginConfig.extensions, 'extensions');
   const modeLines = constructLines(pluginConfig.modes, 'modes');
+  const modesFactoryLines = constructLines(pluginConfig.modesFactory, 'modesFactory');
 
   pluginImportsJsContent += getFormattedImportBlock([
     ...extensionLines.importLines,
     ...modeLines.importLines,
+    ...modesFactoryLines.importLines,
   ]);
   pluginImportsJsContent += getFormattedWindowBlock([
     ...extensionLines.addToWindowLines,
     ...modeLines.addToWindowLines,
+    ...modesFactoryLines.addToWindowLines,
   ]);
 
   pluginImportsJsContent += getRuntimeLoadModesExtensions();
