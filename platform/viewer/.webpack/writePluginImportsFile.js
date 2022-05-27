@@ -51,6 +51,14 @@ function getFormattedWindowBlock(addToWindowLines) {
   return content;
 }
 
+function getRuntimeLoadModesExtensions() {
+  return "\n\n// Add a dynamic runtime loader\n" +
+    "window.runtimeLoadModesExtensions = async () => {\n" +
+    "for(const mode of window.modes) {\n" +
+    "if( mode.runtimeLoadModesExtensions ) await mode.runtimeLoadModesExtensions(window.modes,window.extensions);\n" +
+    "}\n}\n";
+}
+
 function writePluginImportsFile(SRC_DIR) {
   let pluginImportsJsContent = autogenerationDisclaimer;
 
@@ -65,6 +73,8 @@ function writePluginImportsFile(SRC_DIR) {
     ...extensionLines.addToWindowLines,
     ...modeLines.addToWindowLines,
   ]);
+
+  pluginImportsJsContent += getRuntimeLoadModesExtensions();
 
   fs.writeFileSync(
     `${SRC_DIR}/pluginImports.js`,
